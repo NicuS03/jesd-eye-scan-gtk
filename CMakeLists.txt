@@ -1,5 +1,35 @@
 cmake_minimum_required(VERSION 3.10)
-project(jesd-eye-scan-gtk VERSION 1.0.0 LANGUAGES C)
+# Default version
+set(DEFAULT_PROJECT_VERSION "1.0.0")
+
+# Use provided version, or default
+if(NOT DEFINED PROJECT_VERSION)
+    set(PROJECT_VERSION "${DEFAULT_PROJECT_VERSION}" CACHE STRING "Full project version (MAJOR.MINOR.PATCH)")
+endif()
+
+# Split into components
+string(REPLACE "." ";" VERSION_LIST ${PROJECT_VERSION})
+list(LENGTH VERSION_LIST VERSION_LIST_LEN)
+
+# Fallback to default if fewer than 3 parts
+if(VERSION_LIST_LEN LESS 3)
+    message(FATAL_ERROR "PROJECT_VERSION must be in format MAJOR.MINOR.PATCH or MAJOR.MINOR.<git-sha>")
+endif()
+
+# Extract version components
+list(GET VERSION_LIST 0 PROJECT_VERSION_MAJOR)
+list(GET VERSION_LIST 1 PROJECT_VERSION_MINOR)
+list(GET VERSION_LIST 2 PROJECT_VERSION_PATCH)
+
+# Check if patch is a number, else rewrite for Debian
+if(NOT PROJECT_VERSION_PATCH MATCHES "^[0-9]+$")
+    # If patch is not numeric, replace it with 0+<patch>
+    set(PROJECT_VERSION_PATCH "0+${PROJECT_VERSION_PATCH}")
+endif()
+set(PROJECT_VERSION_DEB "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+message(STATUS "Using Debian compatible version: ${PROJECT_VERSION_DEB}")
+
+project(jesd-eye-scan-gtk LANGUAGES C)
 
 # Set C standard
 set(CMAKE_C_STANDARD 99)
@@ -65,11 +95,23 @@ install(FILES icons/ADIlogo.png
     DESTINATION share/jesd/
 )
 
+# Install desktop file INTO the .deb package (for postinst to use)
+install(FILES "jesd_eye_scan.desktop"
+    DESTINATION share/jesd/autostart/
+)
+
+# Copy desktop file to build directory during configuration
+configure_file(
+    "${CMAKE_SOURCE_DIR}/jesd_eye_scan.desktop"
+    "${CMAKE_BINARY_DIR}/jesd_eye_scan.desktop"
+    COPYONLY
+)
+
 # Install desktop file to user's autostart directory
 install(CODE "
     execute_process(COMMAND \${CMAKE_COMMAND} -E make_directory \$ENV{HOME}/.config/autostart)
     execute_process(COMMAND \${CMAKE_COMMAND} -E copy 
-        \${CMAKE_SOURCE_DIR}/jesd_eye_scan.desktop
+	    jesd_eye_scan.desktop
         \$ENV{HOME}/.config/autostart/jesd_eye_scan.desktop)
 ")
 
@@ -79,3 +121,13 @@ add_custom_target(clean-extra
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Removing additional generated files"
 )
+
+option(ENABLE_PACKAGING "Create .deb packages via 'make package'" OFF)
+if(ENABLE_PACKAGING)
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+		include(${CMAKE_CURRENT_SOURCE_DIR}/cmake_linux_packaging.cmake)
+	endif()
+endif()
+
+
+
