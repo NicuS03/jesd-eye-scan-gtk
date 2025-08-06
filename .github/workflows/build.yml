@@ -5,10 +5,10 @@ env:
   MAJOR: 0 
   MINOR: 0
   PATCH: ${{ github.sha }}
-  ARCHITECTURE: all
   SOURCE_CODE: jesd-eye-scan-gtk-source
   EXECUTABLE_LOCATION: usr/local/bin
   SHARE_LOCATIONS: usr/local/share/jesd
+  BUILD_FOLDER: build
 
 on:
   push:
@@ -26,7 +26,12 @@ jobs:
       run:
         working-directory: ${{env.SOURCE_CODE}}
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        include:
+          - container: aandrisa/kuiper_basic_64:latest
+          - container: aandrisa/kuiper_basic_32:latest
+    container: ${{ matrix.container }}
     steps:
     - name: Checkout code repository
       uses: actions/checkout@v4
@@ -36,15 +41,20 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential gnuplot libgtk-3-dev libncurses-dev
+        sudo apt install -y build-essential cmake gnuplot libgtk-3-dev libncurses-dev
 
-    - name: Build C code
-      run: make all
+    - name: Build code with Cmake 
+      run: |
+        mkdir ${{BUILD_FOLDER}}
+        cd ${{BUILD_FOLDER}}
+        cmake -DENABLE_PACKAGING=ON -DMAINTAINER="${{env.MAINTAINER}}" -DPROJECT_VERSION="${{env.MAJOR}}.${{env.MINOR}}.${{env.PATCH}}" ..
     
     - name: Install application
       run: |
         sudo make install
-
+        
+    - name: Verify install locations 
+      run: |
         [ -e "/${{env.EXECUTABLE_LOCATION}}/jesd_status" ] \
         && [ -e "/${{env.EXECUTABLE_LOCATION}}/jesd_eye_scan" ] \
         && [ -e "/${{env.EXECUTABLE_LOCATION}}/jesd_eye_scan_autostart.sh" ] \
@@ -54,24 +64,13 @@ jobs:
         && echo "Installation successful" \
         || { echo "Installation failed, some files are missing"; exit 1; }
 
-    - name: Create artifact directory
+    - name: Create .deb package artifact
       run: |
-        mkdir -p artifacts/DEBIAN
-        mkdir -p artifacts/${{env.EXECUTABLE_LOCATION}}
-        mkdir -p artifacts/${{env.SHARE_LOCATIONS}}
-        mkdir -p artifacts/root/.config/autostart/
-        cp jesd_eye_scan artifacts/${{env.EXECUTABLE_LOCATION}}
-        cp jesd_status artifacts/${{env.EXECUTABLE_LOCATION}}
-        cp jesd_eye_scan_autostart.sh artifacts/${{env.EXECUTABLE_LOCATION}}
-        cp jesd.glade artifacts/${{env.SHARE_LOCATIONS}}/
-        cp icons/ADIlogo.png artifacts/${{env.SHARE_LOCATIONS}}/
-        cp jesd_eye_scan.desktop ./artifacts/root/.config/autostart/jesd_eye_scan.desktop
-        echo -e "Package: jesd-eye-scan-gtk\nVersion: ${MAJOR}.${MINOR}.${PATCH}\nMaintainer: ${MAINTAINER}\nArchitecture: ${ARCHITECTURE}\nDescription: Eye Scan Visualization Utility" > ./artifacts/DEBIAN/control
-        dpkg-deb --build artifacts/ .
+        make package
 
-    - name: Upload artifacts to github
+    - name: Upload .deb artifacts to github
       uses: actions/upload-artifact@v4
       with:
         name: jesd-eye-scan-gtk
-        path: ${{env.SOURCE_CODE}}/jesd-eye-scan-gtk_${{env.MAJOR}}.${{env.MINOR}}.${{env.PATCH}}_${{env.ARCHITECTURE}}.deb
+        path: ${{env.SOURCE_CODE}}/${{env.BUILD_FOLDER}}/jesd-eye-scan-gtk_${{env.MAJOR}}.${{env.MINOR}}.0+${{env.PATCH}}_${{env.ARCHITECTURE}}.deb
         if-no-files-found: error
