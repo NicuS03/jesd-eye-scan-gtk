@@ -45,12 +45,13 @@ jobs:
 
     - name: Build code with Cmake 
       run: |
-        mkdir ${{BUILD_FOLDER}}
-        cd ${{BUILD_FOLDER}}
+        mkdir ${{env.BUILD_FOLDER}}
+        cd ${{env.BUILD_FOLDER}}
         cmake -DENABLE_PACKAGING=ON -DMAINTAINER="${{env.MAINTAINER}}" -DPROJECT_VERSION="${{env.MAJOR}}.${{env.MINOR}}.${{env.PATCH}}" ..
     
     - name: Install application
       run: |
+        cd ${{env.BUILD_FOLDER}}
         sudo make install
         
     - name: Verify install locations 
@@ -66,6 +67,7 @@ jobs:
 
     - name: Create .deb package artifact
       run: |
+        cd ${{env.BUILD_FOLDER}}
         make package
 
     - name: Upload .deb artifacts to github
