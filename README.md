@@ -64,24 +64,12 @@ sudo dnf install gtk3-devel ncurses-devel pkgconfig gcc make
 
 ## Building
 
-The project supports two build systems for flexibility:
-
-### Option 1: Traditional Makefile
-```bash
-make                    # Build both applications
-make jesd_status        # Build terminal application only
-make jesd_eye_scan      # Build GUI application only
-make clean              # Clean build artifacts
-```
-
-### Option 2: CMake Build System
+### CMake Build System
 ```bash
 cmake .                 # Configure build (overwrites Makefile)
 make                    # Build with CMake-generated Makefile
 make clean              # Clean build artifacts
 ```
-
-Both build systems produce identical executables with the same compiler optimizations and dependencies.
 
 ## Installation
 
@@ -93,8 +81,7 @@ This installs:
 - Executables to `/usr/local/bin/`
 - Glade UI file to `/usr/local/share/jesd/`  
 - Application icon to `/usr/local/share/jesd/`
-- Desktop autostart file to user's `~/.config/autostart/`
-- Autostart script to `/usr/local/bin/`
+- Desktop autostart file to user's `/usr/local/share/applications`
 
 To install to a different location:
 ```bash
@@ -148,14 +135,6 @@ sudo sshfs -o allow_other -o sync_read root@target:/ /mnt/remote
 - Frame synchronization status
 
 ## System Integration
-
-### Autostart Configuration
-The GUI application can be configured to start automatically when JESD204 hardware is detected:
-
-```bash
-# The installer places this script in /usr/local/bin/
-jesd_eye_scan_autostart.sh
-```
 
 ### Systemd Service (Optional)
 For headless monitoring, create a systemd service:
