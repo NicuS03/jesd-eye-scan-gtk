@@ -11,6 +11,7 @@ env:
   BUILD_FOLDER: build
 
 on:
+  workflow_dispatch:
   push:
     branches: 
       - main
