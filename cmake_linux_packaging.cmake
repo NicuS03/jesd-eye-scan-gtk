@@ -11,19 +11,15 @@ if (DEBBUILD_CMD)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgtk-3-0, libncurses6, gnuplot")
     
     # Package metadata
-    if(DEFINED MAINTAINER)
-      set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${MAINTAINER}")
-    else()
-      set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Unknown Maintainer")
-    endif()
-   
+    set(CPACK_PACKAGE_CONTACT "Engineerzone <https://ez.analog.com/sw-interface-tools>")
     set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Eye Scan Visualization Utility")
     set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "all")
-    
-    # Custom post-install script to handle desktop file
-    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/postinst;")
-    
+    if(DEFINED ARCHITECTURE)
+    	set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${ARCHITECTURE}")
+    else()
+	set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "all")
+    endif()
+
     message(STATUS "Package dependencies (.deb): ${CPACK_DEBIAN_PACKAGE_DEPENDS}")
 else()
     message(FATAL_ERROR "dpkg not found - cannot create .deb packages")
