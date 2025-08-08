@@ -79,7 +79,6 @@ install(FILES icons/ADIlogo.png
     DESTINATION share/jesd/
 )
 
-# Install desktop file INTO the .deb package (for postinst to use)
 install(FILES "jesd_eye_scan.desktop"
     DESTINATION share/applications/
 )
