@@ -81,7 +81,7 @@ This installs:
 - Executables to `/usr/local/bin/`
 - Glade UI file to `/usr/local/share/jesd/`  
 - Application icon to `/usr/local/share/jesd/`
-- Desktop autostart file to user's `/usr/local/share/applications`
+- Desktop file to `/usr/local/share/applications`
 
 To install to a different location:
 ```bash
